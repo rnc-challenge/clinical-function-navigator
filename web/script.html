@@ -19,8 +19,9 @@
     [
       'entryTabs', 'entryList', 'homeCards', 'homeView', 'clinicalView',
       'clinicalTitle', 'clinicalDescription', 'clinicalSections', 'loading',
-      'searchInput', 'homeButton', 'ageInput', 'livingInput', 'adlInput',
-      'concernInput', 'soapOutput', 'historyOutput', 'handoffOutput',
+      'searchInput', 'homeButton', 'concernInput', 'soapOutput', 'historyOutput',
+      'handoffOutput', 'copySoapButton', 'copyHistoryButton', 'copyHandoffButton',
+      'copyFeedback',
     ].forEach(function (id) {
       els[id] = document.getElementById(id);
     });
@@ -29,8 +30,18 @@
   function bindEvents() {
     els.searchInput.addEventListener('input', renderEntryList);
     els.homeButton.addEventListener('click', showHome);
-    ['ageInput', 'livingInput', 'adlInput', 'concernInput'].forEach(function (id) {
-      els[id].addEventListener('input', refreshGeneratedNotes);
+    els.concernInput.addEventListener('input', refreshGeneratedNotes);
+    document.querySelectorAll('input[name="backgroundCheck"]').forEach(function (checkbox) {
+      checkbox.addEventListener('change', refreshGeneratedNotes);
+    });
+    els.copySoapButton.addEventListener('click', function () {
+      copyOutput('soapOutput', 'SOAPをコピーしました');
+    });
+    els.copyHistoryButton.addEventListener('click', function () {
+      copyOutput('historyOutput', '薬歴をコピーしました');
+    });
+    els.copyHandoffButton.addEventListener('click', function () {
+      copyOutput('handoffOutput', '申し送りをコピーしました');
     });
   }
 
@@ -175,7 +186,12 @@
       checkbox.type = 'checkbox';
       checkbox.addEventListener('change', function () {
         if (checkbox.checked) {
-          state.checkedItems.push(item);
+          const alreadyChecked = state.checkedItems.some(function (checked) {
+            return checked.id === item.id;
+          });
+          if (!alreadyChecked) {
+            state.checkedItems.push(item);
+          }
         } else {
           state.checkedItems = state.checkedItems.filter(function (checked) {
             return checked.id !== item.id;
@@ -240,13 +256,54 @@
       .generateSupportNotes({
         contextTitle: state.activeClinical.context.title,
         checkedItems: state.checkedItems,
-        background: {
-          age: els.ageInput.value,
-          living: els.livingInput.value,
-          adl: els.adlInput.value,
-          concern: els.concernInput.value,
-        },
+        background: collectBackground(),
       });
+  }
+
+  function collectBackground() {
+    const risks = Array.prototype.slice.call(document.querySelectorAll('input[name="backgroundCheck"]:checked')).map(function (checkbox) {
+      return checkbox.value;
+    });
+
+    return {
+      risks: risks,
+      concern: els.concernInput.value,
+    };
+  }
+
+  function copyOutput(outputId, message) {
+    const textarea = els[outputId];
+    if (!textarea) return;
+
+    const text = textarea.value || '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showCopyFeedback(message);
+      }).catch(function () {
+        fallbackCopy(textarea, message);
+      });
+      return;
+    }
+
+    fallbackCopy(textarea, message);
+  }
+
+  function fallbackCopy(textarea, message) {
+    textarea.focus();
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showCopyFeedback(message);
+    } catch (error) {
+      showCopyFeedback('コピーできませんでした。テキストを選択しました。');
+    }
+  }
+
+  function showCopyFeedback(message) {
+    els.copyFeedback.textContent = message;
+    window.setTimeout(function () {
+      els.copyFeedback.textContent = '';
+    }, 1800);
   }
 
   function showHome() {
