@@ -227,6 +227,32 @@
     margin-bottom: 12px;
   }
 
+  .summary-block {
+    display: grid;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .summary-block:first-of-type {
+    margin-top: 0;
+  }
+
+  .summary-block h4 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 13px;
+  }
+
+  .summary-block p {
+    line-height: 1.7;
+  }
+
+  .summary-list {
+    margin: 0;
+    padding-left: 20px;
+    line-height: 1.8;
+  }
+
   .check-list {
     display: grid;
     gap: 10px;
@@ -301,6 +327,58 @@
   .panel-section label textarea {
     margin-top: 5px;
     color: var(--text);
+  }
+
+  .background-check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .panel-section .check-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    background: #fff;
+    font-size: 13px;
+  }
+
+  .check-option input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .output-header h2 {
+    margin: 0;
+  }
+
+  .copy-button {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .copy-feedback {
+    min-height: 18px;
+    margin-top: 6px;
+    color: var(--primary);
+    font-size: 12px;
   }
 
   .loading {
