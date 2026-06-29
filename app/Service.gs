@@ -108,8 +108,33 @@ const CfnService = (function () {
     return {
       title: context.title,
       description: context.description || firstValue(rows[0], ['確認の焦点', '説明', 'Description', '概要', '主な作用']) || '',
+      watchPoints: buildWatchPoints(context, workbook),
       medicines: uniqueStrings(medicines).slice(0, 12),
     };
+  }
+
+  function buildWatchPoints(context, workbook) {
+    const assessmentPoints = relatedRows(workbook.Assessment_Item, context).map(function (row) {
+      return firstValue(row, ['OutputLabel', 'Question_or_Item', '確認項目', '確認すること']);
+    });
+    const functionPoints = relatedRows(workbook.Functional_Impact, context).map(function (row) {
+      return firstValue(row, ['確認コメント', '主な理由', '生活機能への影響']);
+    });
+    const drugFocus = relatedRows(workbook.Drug_Master, context).map(function (row) {
+      return firstValue(row, ['確認の焦点']);
+    });
+
+    const primaryPoints = uniqueStrings(assessmentPoints.concat(functionPoints)
+      .map(toWatchPoint)
+      .filter(Boolean));
+    const fallbackPoints = uniqueStrings(drugFocus
+      .map(toWatchPoint)
+      .filter(Boolean));
+
+    if (primaryPoints.length >= 5) {
+      return primaryPoints.slice(0, 6);
+    }
+    return uniqueStrings(primaryPoints.concat(fallbackPoints)).slice(0, 6);
   }
 
   function buildSection(rows, context, textCandidates) {
@@ -226,6 +251,18 @@ const CfnService = (function () {
       seen[value] = true;
       return true;
     });
+  }
+
+  function toWatchPoint(value) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    return text
+      .replace(/はあるか$/, '')
+      .replace(/を確認$/, '')
+      .replace(/確認$/, '')
+      .replace(/について$/, '')
+      .replace(/[。、].*$/, '')
+      .trim();
   }
 
   function slug(value) {
