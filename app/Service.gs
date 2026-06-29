@@ -21,7 +21,15 @@ const CfnService = (function () {
   function getClinicalView(entryType, entryId) {
     const workbook = CfnRepository.getWorkbookData();
     const selected = findEntryItem(entryType, entryId, workbook);
-    const context = selected || { id: entryId, title: entryId || '未選択', type: entryType };
+    const context = Object.assign({
+      id: entryId,
+      title: entryId || '未選択',
+      type: entryType,
+      sourceType: entryType,
+    }, selected || {}, {
+      type: entryType,
+      sourceType: entryType,
+    });
 
     return {
       context: context,
@@ -31,7 +39,7 @@ const CfnService = (function () {
       supports: buildSection(workbook.Clinical_Action, context, ['支援項目', '支援すること', 'Action', '介入', '内容']),
       redFlags: RiskService.getRedFlags(workbook.Red_Flag, context),
       functionalImpacts: buildSection(workbook.Functional_Impact, context, ['生活機能への影響', 'Functional Impact', '影響', '内容']),
-      evidence: buildReferences(workbook.Evidence.concat(workbook.Drug_Evidence), context),
+      evidence: buildDrugEvidence(workbook.Drug_Evidence, workbook.Evidence, context),
       guidelines: buildReferences(workbook.Guideline_Reference, context),
       templates: workbook.SOAP_Template,
     };
@@ -42,12 +50,14 @@ const CfnService = (function () {
       return uniqueItems(workbook.Drug_Master, ['薬効群', '薬効分類', '薬効', 'Drug Class', 'Drug_Class', 'class', 'category']);
     }
     if (entryType === 'disease') {
+      // TODO(v0.2): Disease_Masterへ移行し、疾患入口は疾患マスターから表示する。
       return uniqueItems(workbook.Clinical_Management, ['疾患', 'Disease', '適応疾患', '病名']);
     }
     if (entryType === 'function') {
       return uniqueItems(workbook.Functional_Impact, ['生活機能', 'Function', 'ADL', '機能']);
     }
     if (entryType === 'background') {
+      // TODO(v0.2): Patient_Background_Masterへ移行し、患者背景入口は背景マスターから表示する。
       return uniqueItems(workbook.Assessment_Item, ['患者背景', 'Background', '対象', '属性']);
     }
     return [];
@@ -128,10 +138,35 @@ const CfnService = (function () {
     });
   }
 
+  function buildDrugEvidence(drugEvidenceRows, evidenceRows, context) {
+    const evidenceById = {};
+    (evidenceRows || []).forEach(function (row) {
+      const evidenceId = firstValue(row, ['EvidenceID', 'Evidence_ID', '文献ID']);
+      if (evidenceId) evidenceById[evidenceId] = row;
+    });
+
+    return relatedRows(drugEvidenceRows, context).map(function (linkRow) {
+      const evidenceId = firstValue(linkRow, ['EvidenceID', 'Evidence_ID', '文献ID']);
+      const evidenceRow = evidenceById[evidenceId] || {};
+      const merged = Object.assign({}, evidenceRow, linkRow);
+
+      return {
+        id: evidenceId || slug(rowToSummary(linkRow)),
+        title: firstValue(merged, ['タイトル', 'Title', '文献名', 'Recommendation', 'KeyMessage', 'ClinicalPearl', 'Memo']) || rowToSummary(merged),
+        url: firstValue(merged, ['URL', 'Link', 'リンク']),
+        note: firstValue(merged, ['Recommendation', 'KeyMessage', 'ClinicalPearl', 'EvidenceLevel', 'Memo', '要約', 'Summary', 'Note', 'メモ']) || '',
+        evidenceId: evidenceId,
+      };
+    }).filter(function (item) {
+      return item.title;
+    });
+  }
+
   function relatedRows(rows, context) {
     rows = rows || [];
     if (!context || !context.title) return rows;
 
+    // TODO(v0.2): 全セル部分一致ではなく、DrugID / DiseaseID / FunctionID / BackgroundID による関連付けへ移行する。
     const exact = rows.filter(function (row) {
       return rowMatchesContext(row, context);
     });
