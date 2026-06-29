@@ -1,5 +1,4 @@
 
-
 <!doctype html>
 <html>
   <head>
@@ -37,7 +36,7 @@
           <div class="clinical-header">
             <button id="homeButton" class="ghost-button" type="button">ホーム</button>
             <div>
-              <p class="eyebrow">Clinical View</p>
+              <p class="eyebrow">患者支援</p>
               <h2 id="clinicalTitle"></h2>
               <p id="clinicalDescription"></p>
             </div>
@@ -50,25 +49,43 @@
       <aside class="right-pane">
         <section class="panel-section">
           <h2>患者背景チェック</h2>
-          <label>年齢<input id="ageInput" type="text" placeholder="例: 75歳"></label>
-          <label>生活状況<input id="livingInput" type="text" placeholder="例: 独居、家族同居"></label>
-          <label>ADL<input id="adlInput" type="text" placeholder="例: 歩行不安あり"></label>
-          <label>本人・家族の困りごと<textarea id="concernInput" rows="3"></textarea></label>
+          <div class="background-check-grid">
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="75歳以上">75歳以上</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="CKD">CKD</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="低BMI">低BMI</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="食欲低下">食欲低下</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="体重減少">体重減少</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="転倒歴">転倒歴</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="独居">独居</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="認知症">認知症</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="心不全">心不全</label>
+          </div>
+          <label>自由記載<textarea id="concernInput" rows="3" placeholder="例: 食事量が半分程度、家族が体重減少を心配"></textarea></label>
         </section>
 
         <section class="panel-section">
-          <h2>SOAP</h2>
+          <div class="output-header">
+            <h2>SOAP</h2>
+            <button id="copySoapButton" class="copy-button" type="button" onclick="copyOutput('soapOutput', 'SOAPをコピーしました')">コピー</button>
+          </div>
           <textarea id="soapOutput" rows="8" readonly></textarea>
         </section>
 
         <section class="panel-section">
-          <h2>薬歴</h2>
+          <div class="output-header">
+            <h2>薬歴</h2>
+            <button id="copyHistoryButton" class="copy-button" type="button" onclick="copyOutput('historyOutput', '薬歴をコピーしました')">コピー</button>
+          </div>
           <textarea id="historyOutput" rows="5" readonly></textarea>
         </section>
 
         <section class="panel-section">
-          <h2>申し送り</h2>
+          <div class="output-header">
+            <h2>申し送り</h2>
+            <button id="copyHandoffButton" class="copy-button" type="button" onclick="copyOutput('handoffOutput', '申し送りをコピーしました')">コピー</button>
+          </div>
           <textarea id="handoffOutput" rows="5" readonly></textarea>
+          <p id="copyFeedback" class="copy-feedback" aria-live="polite"></p>
         </section>
       </aside>
     </div>
