@@ -1,0 +1,284 @@
+
+<script>
+  const state = {
+    homeData: null,
+    activeEntry: 'drugGroup',
+    activeClinical: null,
+    checkedItems: [],
+  };
+
+  const els = {};
+
+  document.addEventListener('DOMContentLoaded', function () {
+    bindElements();
+    bindEvents();
+    loadHomeData();
+  });
+
+  function bindElements() {
+    [
+      'entryTabs', 'entryList', 'homeCards', 'homeView', 'clinicalView',
+      'clinicalTitle', 'clinicalDescription', 'clinicalSections', 'loading',
+      'searchInput', 'homeButton', 'ageInput', 'livingInput', 'adlInput',
+      'concernInput', 'soapOutput', 'historyOutput', 'handoffOutput',
+    ].forEach(function (id) {
+      els[id] = document.getElementById(id);
+    });
+  }
+
+  function bindEvents() {
+    els.searchInput.addEventListener('input', renderEntryList);
+    els.homeButton.addEventListener('click', showHome);
+    ['ageInput', 'livingInput', 'adlInput', 'concernInput'].forEach(function (id) {
+      els[id].addEventListener('input', refreshGeneratedNotes);
+    });
+  }
+
+  function loadHomeData() {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function (data) {
+        state.homeData = data;
+        state.activeEntry = 'drugGroup';
+        renderHome();
+        renderEntryTabs();
+        renderEntryList();
+        showLoading(false);
+      })
+      .withFailureHandler(function (error) {
+        showLoading(false);
+        showError(error);
+      })
+      .getHomeData();
+  }
+
+  function renderHome() {
+    els.homeCards.innerHTML = '';
+    state.homeData.entries.forEach(function (entry) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'home-card';
+      button.innerHTML = '<span class="icon">' + entry.icon + '</span><strong>' + escapeHtml(entry.label) + '</strong><span class="muted">' + entry.items.length + '件</span>';
+      button.addEventListener('click', function () {
+        state.activeEntry = entry.id;
+        renderEntryTabs();
+        renderEntryList();
+      });
+      els.homeCards.appendChild(button);
+    });
+  }
+
+  function renderEntryTabs() {
+    els.entryTabs.innerHTML = '';
+    state.homeData.entries.forEach(function (entry) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = entry.id === state.activeEntry ? 'active' : '';
+      button.textContent = entry.icon + ' ' + entry.label;
+      button.addEventListener('click', function () {
+        state.activeEntry = entry.id;
+        renderEntryTabs();
+        renderEntryList();
+      });
+      els.entryTabs.appendChild(button);
+    });
+  }
+
+  function renderEntryList() {
+    const entry = currentEntry();
+    const keyword = normalize(els.searchInput.value);
+    els.entryList.innerHTML = '';
+
+    const items = (entry.items || []).filter(function (item) {
+      return !keyword || normalize(item.title).indexOf(keyword) !== -1 || normalize(item.description).indexOf(keyword) !== -1;
+    });
+
+    if (!items.length) {
+      els.entryList.innerHTML = '<p class="muted">該当する項目がありません。</p>';
+      return;
+    }
+
+    items.forEach(function (item) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'list-item';
+      button.innerHTML = '<strong>' + escapeHtml(item.title) + '</strong>' +
+        (item.description ? '<span>' + escapeHtml(item.description) + '</span>' : '');
+      button.addEventListener('click', function () {
+        loadClinicalView(entry.id, item.id);
+      });
+      els.entryList.appendChild(button);
+    });
+  }
+
+  function loadClinicalView(entryType, entryId) {
+    showLoading(true);
+    google.script.run
+      .withSuccessHandler(function (data) {
+        state.activeClinical = data;
+        state.checkedItems = [];
+        renderClinicalView();
+        refreshGeneratedNotes();
+        showLoading(false);
+      })
+      .withFailureHandler(function (error) {
+        showLoading(false);
+        showError(error);
+      })
+      .getClinicalView(entryType, entryId);
+  }
+
+  function renderClinicalView() {
+    els.homeView.classList.add('hidden');
+    els.clinicalView.classList.remove('hidden');
+
+    const data = state.activeClinical;
+    els.clinicalTitle.textContent = data.context.title;
+    els.clinicalDescription.textContent = data.context.description || '';
+    els.clinicalSections.innerHTML = '';
+
+    addBasicInfoSection(data.basicInfo);
+    addCheckSection('確認すること', data.assessmentItems);
+    addPlainSection('説明すること', data.explanations);
+    addPlainSection('支援すること', data.supports);
+    addPlainSection('Red Flag', data.redFlags, 'red-flag');
+    addPlainSection('生活機能への影響', data.functionalImpacts);
+    addReferenceSection('Evidence', data.evidence);
+    addReferenceSection('Guideline', data.guidelines);
+  }
+
+  function addBasicInfoSection(info) {
+    const content = [];
+    if (info.description) content.push('<p>' + escapeHtml(info.description) + '</p>');
+    if (info.medicines && info.medicines.length) {
+      content.push('<p class="note">関連薬剤: ' + info.medicines.map(escapeHtml).join('、') + '</p>');
+    }
+    addSection('基本情報', content.length ? content.join('') : '<p class="muted">スプレッドシートに基本情報がありません。</p>');
+  }
+
+  function addCheckSection(title, items) {
+    if (!items || !items.length) {
+      addSection(title, '<p class="muted">表示できる項目がありません。</p>');
+      return;
+    }
+
+    const wrapper = document.createElement('section');
+    wrapper.className = 'content-section';
+    wrapper.innerHTML = '<h3>' + escapeHtml(title) + '</h3>';
+    const list = document.createElement('div');
+    list.className = 'check-list';
+
+    items.forEach(function (item) {
+      const row = document.createElement('label');
+      row.className = 'check-row';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.addEventListener('change', function () {
+        if (checkbox.checked) {
+          state.checkedItems.push(item);
+        } else {
+          state.checkedItems = state.checkedItems.filter(function (checked) {
+            return checked.id !== item.id;
+          });
+        }
+        refreshGeneratedNotes();
+      });
+
+      const text = document.createElement('span');
+      text.innerHTML = escapeHtml(item.text) + (item.note ? '<span class="note">' + escapeHtml(item.note) + '</span>' : '');
+      row.appendChild(checkbox);
+      row.appendChild(text);
+      list.appendChild(row);
+    });
+
+    wrapper.appendChild(list);
+    els.clinicalSections.appendChild(wrapper);
+  }
+
+  function addPlainSection(title, items, extraClass) {
+    if (!items || !items.length) {
+      addSection(title, '<p class="muted">表示できる項目がありません。</p>', extraClass);
+      return;
+    }
+
+    const html = '<ul>' + items.map(function (item) {
+      return '<li>' + escapeHtml(item.text || item.title) +
+        (item.note ? '<div class="note">' + escapeHtml(item.note) + '</div>' : '') +
+        (item.urgency ? '<div class="note">緊急度: ' + escapeHtml(item.urgency) + '</div>' : '') +
+        '</li>';
+    }).join('') + '</ul>';
+    addSection(title, html, extraClass);
+  }
+
+  function addReferenceSection(title, items) {
+    const actions = (items || []).slice(0, 6).map(function (item, index) {
+      const label = item.title || title + ' ' + (index + 1);
+      if (item.url) {
+        return '<a href="' + escapeAttribute(item.url) + '" target="_blank" rel="noopener">' + escapeHtml(label) + '</a>';
+      }
+      return '<button type="button">' + escapeHtml(label) + '</button>';
+    });
+
+    addSection(title, actions.length ? '<div class="reference-actions">' + actions.join('') + '</div>' : '<div class="reference-actions"><button type="button">' + title + '</button></div>');
+  }
+
+  function addSection(title, html, extraClass) {
+    const section = document.createElement('section');
+    section.className = 'content-section' + (extraClass ? ' ' + extraClass : '');
+    section.innerHTML = '<h3>' + escapeHtml(title) + '</h3>' + html;
+    els.clinicalSections.appendChild(section);
+  }
+
+  function refreshGeneratedNotes() {
+    if (!state.activeClinical) return;
+    google.script.run
+      .withSuccessHandler(function (notes) {
+        els.soapOutput.value = notes.soap;
+        els.historyOutput.value = notes.medicationHistory;
+        els.handoffOutput.value = notes.handoff;
+      })
+      .generateSupportNotes({
+        contextTitle: state.activeClinical.context.title,
+        checkedItems: state.checkedItems,
+        background: {
+          age: els.ageInput.value,
+          living: els.livingInput.value,
+          adl: els.adlInput.value,
+          concern: els.concernInput.value,
+        },
+      });
+  }
+
+  function showHome() {
+    els.clinicalView.classList.add('hidden');
+    els.homeView.classList.remove('hidden');
+  }
+
+  function currentEntry() {
+    return state.homeData.entries.filter(function (entry) {
+      return entry.id === state.activeEntry;
+    })[0] || state.homeData.entries[0];
+  }
+
+  function showLoading(visible) {
+    els.loading.classList.toggle('hidden', !visible);
+  }
+
+  function showError(error) {
+    alert(error && error.message ? error.message : error);
+  }
+
+  function normalize(value) {
+    return String(value || '').toLowerCase().replace(/\s+/g, '');
+  }
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function (char) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+    });
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, '&#96;');
+  }
+</script>
