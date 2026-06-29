@@ -1,4 +1,10 @@
 # clinical-function-navigator
+
+![Version](https://img.shields.io/badge/version-0.1-blue)
+![Status](https://img.shields.io/badge/status-Under%20Development-orange)
+![Platform](https://img.shields.io/badge/platform-Google%20Apps%20Script-green)
+![License](https://img.shields.io/badge/license-TBD-lightgrey)
+
 # Clinical Function Navigator (CFN)
 
 > **患者支援に必要な視点を、一つに。**
