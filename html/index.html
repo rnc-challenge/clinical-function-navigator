@@ -1,0 +1,185 @@
+
+<!doctype html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?!= include('style'); ?>
+  </head>
+  <body>
+    <div id="appShell" class="app">
+      <aside class="left-pane">
+        <div class="brand">
+          <div class="brand-mark">CFN</div>
+          <div>
+            <h1>Clinical Function Navigator</h1>
+            <p>患者支援ワークスペース</p>
+          </div>
+        </div>
+
+        <div class="mode-switch" role="tablist" aria-label="CFN mode">
+          <button id="navigatorModeButton" class="active" type="button">Navigator</button>
+          <button id="studioModeButton" type="button">Studio</button>
+        </div>
+
+        <div class="search-box">
+          <input id="searchInput" type="search" placeholder="検索">
+        </div>
+
+        <div id="navigatorSidebar">
+          <nav id="entryTabs" class="entry-tabs"></nav>
+          <div id="entryList" class="entry-list"></div>
+        </div>
+
+        <div id="studioSidebar" class="studio-sidebar hidden">
+          <p class="muted">GLP-1受容体作動薬の患者支援コンテンツを編集します。</p>
+          <button id="loadStudioButton" class="primary" type="button">GLP-1を編集</button>
+        </div>
+      </aside>
+
+      <main class="center-pane">
+        <section id="homeView" class="home-view">
+          <p class="tagline">患者支援に必要な視点を、一つに。<br>必要な情報を、必要な人へ、必要なタイミングで。</p>
+          <div id="homeCards" class="home-cards"></div>
+        </section>
+
+        <section id="clinicalView" class="clinical-view hidden">
+          <div class="clinical-header">
+            <button id="homeButton" class="ghost-button" type="button">ホーム</button>
+            <div>
+              <p class="eyebrow">患者支援</p>
+              <h2 id="clinicalTitle"></h2>
+              <p id="clinicalDescription"></p>
+            </div>
+          </div>
+
+          <div id="clinicalSections" class="clinical-sections"></div>
+        </section>
+
+        <section id="studioView" class="studio-view hidden">
+          <div class="clinical-header">
+            <div>
+              <p class="eyebrow">Studio</p>
+              <h2>患者支援コンテンツ編集</h2>
+              <p>Spreadsheetの列ではなく、患者支援の流れに沿って編集します。</p>
+            </div>
+          </div>
+
+          <form id="studioForm" class="studio-form">
+            <section class="content-section">
+              <h3>Summary</h3>
+              <label>薬効群<input id="studioDrugClass" type="text"></label>
+              <label>概要<textarea id="studioSummary" rows="4"></textarea></label>
+              <label>まず見ること<textarea id="studioWatchPoints" rows="4" placeholder="1行に1項目"></textarea></label>
+              <label>関連薬剤<textarea id="studioMedicines" rows="3" placeholder="1行に1薬剤"></textarea></label>
+            </section>
+
+            <section class="content-section">
+              <h3>Assessment</h3>
+              <textarea id="studioAssessment" rows="5" placeholder="1行に1項目"></textarea>
+            </section>
+
+            <section class="content-section">
+              <h3>Education</h3>
+              <textarea id="studioEducation" rows="5" placeholder="患者説明を1行に1項目"></textarea>
+            </section>
+
+            <section class="content-section">
+              <h3>Safety Management</h3>
+              <textarea id="studioSafety" rows="4" placeholder="安全管理の視点を1行に1項目"></textarea>
+            </section>
+
+            <section class="content-section">
+              <h3>Multidisciplinary Support</h3>
+              <textarea id="studioSupport" rows="5" placeholder="多職種支援を1行に1項目"></textarea>
+            </section>
+
+            <section class="content-section">
+              <h3>Red Flag</h3>
+              <textarea id="studioRedFlags" rows="4" placeholder="受診勧奨や共有が必要なサインを1行に1項目"></textarea>
+            </section>
+
+            <section class="content-section">
+              <h3>Functional Impact</h3>
+              <textarea id="studioFunctionalImpact" rows="5" placeholder="生活機能への影響を1行に1項目"></textarea>
+            </section>
+
+            <section class="content-section">
+              <h3>Clinical Pearl / Evidence</h3>
+              <label>Clinical Pearl<textarea id="studioClinicalPearl" rows="3"></textarea></label>
+              <label>Evidence Memo<textarea id="studioEvidenceMemo" rows="3"></textarea></label>
+              <div class="studio-grid">
+                <label>PMID<input id="studioPmid" type="text"></label>
+                <label>DOI<input id="studioDoi" type="text"></label>
+              </div>
+              <label>URL<input id="studioEvidenceUrl" type="url"></label>
+            </section>
+
+            <section class="content-section">
+              <h3>Guideline</h3>
+              <textarea id="studioGuideline" rows="4" placeholder="ガイドライン・添付文書などを1行に1項目"></textarea>
+            </section>
+
+            <div class="studio-actions">
+              <button id="studioPreviewButton" type="button">プレビュー</button>
+              <button id="studioSaveButton" class="primary" type="button">保存</button>
+              <span id="studioStatus" class="muted" aria-live="polite"></span>
+            </div>
+          </form>
+
+          <section class="content-section">
+            <h3>Preview</h3>
+            <div id="studioPreview" class="studio-preview muted">プレビューを押すと、Navigatorに近い形で確認できます。</div>
+          </section>
+        </section>
+      </main>
+
+      <aside class="right-pane">
+        <section class="panel-section">
+          <h2>患者背景チェック</h2>
+          <div class="background-check-grid">
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="75歳以上">75歳以上</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="CKD">CKD</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="低BMI">低BMI</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="食欲低下">食欲低下</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="体重減少">体重減少</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="転倒歴">転倒歴</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="独居">独居</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="認知症">認知症</label>
+            <label class="check-option"><input type="checkbox" name="backgroundCheck" value="心不全">心不全</label>
+          </div>
+          <label>自由記載<textarea id="concernInput" rows="3" placeholder="例: 食事量が半分程度、家族が体重減少を心配"></textarea></label>
+        </section>
+
+        <section class="panel-section">
+          <div class="output-header">
+            <h2>SOAP</h2>
+            <button id="copySoapButton" class="copy-button" type="button" onclick="copyOutput('soapOutput', 'SOAPをコピーしました')">コピー</button>
+          </div>
+          <textarea id="soapOutput" rows="8" readonly></textarea>
+        </section>
+
+        <section class="panel-section">
+          <div class="output-header">
+            <h2>薬歴</h2>
+            <button id="copyHistoryButton" class="copy-button" type="button" onclick="copyOutput('historyOutput', '薬歴をコピーしました')">コピー</button>
+          </div>
+          <textarea id="historyOutput" rows="5" readonly></textarea>
+        </section>
+
+        <section class="panel-section">
+          <div class="output-header">
+            <h2>申し送り</h2>
+            <button id="copyHandoffButton" class="copy-button" type="button" onclick="copyOutput('handoffOutput', '申し送りをコピーしました')">コピー</button>
+          </div>
+          <textarea id="handoffOutput" rows="5" readonly></textarea>
+          <p id="copyFeedback" class="copy-feedback" aria-live="polite"></p>
+        </section>
+      </aside>
+    </div>
+
+    <div id="loading" class="loading">読み込み中...</div>
+    <?!= include('script'); ?>
+  </body>
+</html>
