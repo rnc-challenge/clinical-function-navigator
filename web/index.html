@@ -1,1 +1,79 @@
 
+
+<!doctype html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?!= include('style'); ?>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="left-pane">
+        <div class="brand">
+          <div class="brand-mark">CFN</div>
+          <div>
+            <h1>Clinical Function Navigator</h1>
+            <p>患者支援ワークスペース</p>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <input id="searchInput" type="search" placeholder="検索">
+        </div>
+
+        <nav id="entryTabs" class="entry-tabs"></nav>
+        <div id="entryList" class="entry-list"></div>
+      </aside>
+
+      <main class="center-pane">
+        <section id="homeView" class="home-view">
+          <p class="tagline">患者支援に必要な視点を、一つに。<br>必要な情報を、必要な人へ、必要なタイミングで。</p>
+          <div id="homeCards" class="home-cards"></div>
+        </section>
+
+        <section id="clinicalView" class="clinical-view hidden">
+          <div class="clinical-header">
+            <button id="homeButton" class="ghost-button" type="button">ホーム</button>
+            <div>
+              <p class="eyebrow">Clinical View</p>
+              <h2 id="clinicalTitle"></h2>
+              <p id="clinicalDescription"></p>
+            </div>
+          </div>
+
+          <div id="clinicalSections" class="clinical-sections"></div>
+        </section>
+      </main>
+
+      <aside class="right-pane">
+        <section class="panel-section">
+          <h2>患者背景チェック</h2>
+          <label>年齢<input id="ageInput" type="text" placeholder="例: 75歳"></label>
+          <label>生活状況<input id="livingInput" type="text" placeholder="例: 独居、家族同居"></label>
+          <label>ADL<input id="adlInput" type="text" placeholder="例: 歩行不安あり"></label>
+          <label>本人・家族の困りごと<textarea id="concernInput" rows="3"></textarea></label>
+        </section>
+
+        <section class="panel-section">
+          <h2>SOAP</h2>
+          <textarea id="soapOutput" rows="8" readonly></textarea>
+        </section>
+
+        <section class="panel-section">
+          <h2>薬歴</h2>
+          <textarea id="historyOutput" rows="5" readonly></textarea>
+        </section>
+
+        <section class="panel-section">
+          <h2>申し送り</h2>
+          <textarea id="handoffOutput" rows="5" readonly></textarea>
+        </section>
+      </aside>
+    </div>
+
+    <div id="loading" class="loading">読み込み中...</div>
+    <?!= include('script'); ?>
+  </body>
+</html>
