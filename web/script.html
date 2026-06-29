@@ -160,11 +160,18 @@
 
   function addBasicInfoSection(info) {
     const content = [];
-    if (info.description) content.push('<p>' + escapeHtml(info.description) + '</p>');
-    if (info.medicines && info.medicines.length) {
-      content.push('<p class="note">関連薬剤: ' + info.medicines.map(escapeHtml).join('、') + '</p>');
+    if (info.description) {
+      content.push('<div class="summary-block"><h4>概要</h4><p>' + escapeHtml(info.description) + '</p></div>');
     }
-    addSection('基本情報', content.length ? content.join('') : '<p class="muted">スプレッドシートに基本情報がありません。</p>');
+    if (info.watchPoints && info.watchPoints.length) {
+      content.push('<div class="summary-block"><h4>まず見ること</h4><ul class="summary-list">' + info.watchPoints.map(function (point) {
+        return '<li>' + escapeHtml(point) + '</li>';
+      }).join('') + '</ul></div>');
+    }
+    if (info.medicines && info.medicines.length) {
+      content.push('<div class="summary-block"><h4>関連薬剤</h4><p>' + info.medicines.map(escapeHtml).join('、') + '</p></div>');
+    }
+    addSection('Summary', content.length ? content.join('') : '<p class="muted">スプレッドシートにSummary情報がありません。</p>');
   }
 
   function addCheckSection(title, items) {
